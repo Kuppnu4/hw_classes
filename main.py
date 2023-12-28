@@ -13,10 +13,33 @@ class Field:
     у ньому реалізується логіка загальна для всіх полів
     '''
     def __init__(self, value):
-        self.value = value
+        self.__value = value
 
     def __str__(self):
-        return str(self.value)
+        return str(self.__value)
+
+    @property
+    def value(self):
+        '''
+        value getter
+        '''
+        return self.__value
+
+    @value.setter
+    def value(self, new_value):
+        '''
+        value setter
+        '''
+        if self.is_valid():
+            self.__value = new_value
+        else:
+            raise ValueError
+
+    def is_valid(self):
+        '''
+        болванка. метод всегда возвращает True
+        '''
+        return True
 
 
 class Birthday(Field):
@@ -25,30 +48,18 @@ class Birthday(Field):
     '''
     def __init__(self, value):
 
-        self.regexp_birthday = re.compile(r'^(?:0[1-9]|[12][0-9]|3[01])-(?:0[1-9]|1[0-2])-(?:19\d{2}|20[0-1]\d|202[0-3])$')
-
         self.__value = value
-        if self.regexp_birthday.match(value):
+        if self.is_valid():
             super().__init__(self.__value)
         else:
             raise ValueError
 
-    @property
-    def value(self):
-        '''
-        value getter
-        '''
-        return self.__value
+    def is_valid(self):
+        regexp_birthday = re.compile(r'^(?:0[1-9]|[12][0-9]|3[01])-(?:0[1-9]|1[0-2])-(?:19\d{2}|20[0-1]\d|202[0-3])$')
 
-    @value.setter
-    def value(self, new_value):
-        '''
-        value setter
-        '''
-        if self.regexp_birthday.match(new_value):
-            self.__value = new_value
-        else:
-            raise ValueError
+        return bool(regexp_birthday.match(self.__value))
+
+
 
 # pylint: disable=too-few-public-methods
 class Name(Field):
@@ -57,29 +68,18 @@ class Name(Field):
     '''
 
     def __init__(self, value):
-        self.regexp_name = re.compile(r'^[A-Z]{1}[a-zA-Z0-9]{3,15}$')
         self.__value = value
-        if self.regexp_name.match(value):
+        if self.is_valid():
             super().__init__(self.__value)
         else:
             raise ValueError
 
-    @property
-    def value(self):
-        '''
-        value getter
-        '''
-        return self.__value
+    def is_valid(self):
+        regexp_name = re.compile(r'^[A-Z]{1}[a-zA-Z0-9]{3,15}$')
 
-    @value.setter
-    def value(self, new_value):
-        '''
-        value setter
-        '''
-        if self.regexp_name.match(new_value):
-            self.__value = new_value
-        else:
-            raise ValueError
+        return bool(regexp_name.match(self.__value))
+
+
 
 
 # pylint: disable=too-few-public-methods
@@ -91,29 +91,17 @@ class Phone(Field):
     '''
 
     def __init__(self, value):
-        self.regexp_10_digits = re.compile(r'^\d{10}$')
         self.__value = value
-        if self.regexp_10_digits.match(value):
-            super().__init__(value)
+        if self.is_valid():
+            super().__init__(self.__value)
         else:
             raise ValueError
 
-    @property
-    def value(self):
-        '''
-        value getter
-        '''
-        return self.__value
+    def is_valid(self):
+        regexp_10_digits = re.compile(r'^\d{10}$')
 
-    @value.setter
-    def value(self, new_value):
-        '''
-        value setter
-        '''
-        if self.regexp_10_digits.match(new_value):
-            self.__value = new_value
-        else:
-            raise ValueError
+        return bool(regexp_10_digits.match(self.__value))
+
 
 
 class Record:
@@ -194,14 +182,16 @@ class Record:
         Редагування телефонів.
         '''
 
+        exist = False
+
         for phone_obj in self.phones:
             if phone_obj.value == old_number:
                 index_of_old_number = self.phones.index(phone_obj)
                 self.phones[index_of_old_number] = Phone(new_number)
-                break
+                exist = True
 
-            else:
-                raise ValueError
+        if not exist:
+            raise ValueError
 
 
     def find_phone(self, search_phone):
@@ -278,7 +268,7 @@ class Generator:
 
     def __next__(self):
 
-        if len(self.written_contacts) < len(self.data_dict):
+        if len(self.written_contacts) < len(self.data_dict):                #проверяем колличество уже взятых контактов для вывода
             self.result_contacts = []
 
             if len(self.contacts_list) > self.N - 1:                        #проверяем колличество оставшихся контактов для обработки
@@ -328,7 +318,7 @@ print(john)  # Виведення: Contact name: John, phones: 1112223333; 55555
     # Пошук конкретного телефону у записі John
 found_phone = john.find_phone("5555555555")
 print(f"{john.name}: {found_phone}")  # Виведення: 5555555555
-
+alik_rec = Record('Asdsd', '12-02-2020')
     # Видалення запису Jane
 book.delete("Jane")
 
