@@ -5,7 +5,6 @@ This modul contain classes which implement the Adress Book model
 from collections import UserDict
 import re
 from datetime import datetime
-import pickle
 
 # pylint: disable=too-few-public-methods
 class Field:
@@ -125,10 +124,6 @@ class Record:
     def __str__(self):
         return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
 
-
-    def __json__(self):
-        return {'name': self.name, 'phones': self.phones,
-                'birthday': self.birthday}
 
     def days_to_birthday(self):
         '''
@@ -251,51 +246,15 @@ class AddressBook(UserDict):
         if name_str in self.data:
             del self.data[name_str]
 
-    def save_address_book(self):
-        '''
-        method dumps address_book to the file
-        '''
-        file_name = 'address_book.dat'
-        with open(file_name, 'wb') as file:
-            pickle.dump(self, file)
-
-
-    def read_address_book(self):
-        '''
-        method loads address_book from the file
-        '''
-        file_name = 'address_book.dat'
-        with open(file_name, 'rb') as file:
-            decoded_book = pickle.load(file)
-        return decoded_book
-
-    def search(self, search_str):
-        '''
-        method searches contacts which name or phones match with "search string"
-        '''
-        result = []
-        for abonent_name, abonent_obj in self.data.items():
-
-            if search_str.lower() in abonent_name.lower():
-                result.append(str(abonent_obj))
-                continue
-
-            for phone in abonent_obj.phones:
-                if search_str in phone.value:
-                    result.append(str(abonent_obj))
-                    break
-
-        return f'matching contacts: {result}'
-
 
 class Generator:
     '''
     class which generate outputs of adress book
     '''
 
-    def __init__(self, data_dict, n=3):
+    def __init__(self, data_dict):
 
-        self.n = n
+        self.N = 3
         self.data_dict = data_dict
         self.contacts_list = []                                 #список контактов из data_dict, этот список мы перебираем в __next__
         for key, value in self.data_dict.items():
@@ -312,23 +271,22 @@ class Generator:
         if len(self.written_contacts) < len(self.data_dict):                #проверяем колличество уже взятых контактов для вывода
             self.result_contacts = []
 
-            if len(self.contacts_list) > self.n - 1:                        #проверяем колличество оставшихся контактов для обработки
-                self.result_contacts = self.contacts_list[0:self.n]         #берем из списка контактов необходимое колличество
-
-                for _ in range(self.n):
+            if len(self.contacts_list) > self.N - 1:                        #проверяем колличество оставшихся контактов для обработки
+                self.result_contacts = self.contacts_list[0:self.N]         #берем из списка контактов необходимое колличество
+                for _ in range(self.N):
                     self.written_contacts.append(self.contacts_list[0])     #добавляем контакт в список уже взятых контактов
                     del self.contacts_list[0]               #удаляем взятый контакт из списка всех контактов оставшихся для обработки
 
             else:
-                self.result_contacts = self.contacts_list[0:self.n]
-
+                self.result_contacts = self.contacts_list[0:self.N]
                 for _ in range(len(self.contacts_list)):
                     self.written_contacts.append(self.contacts_list[0])
                     del self.contacts_list[0]
 
             return self.result_contacts                   #возвращаем результат итерации, в виде списка контактов заданной длины
 
-        raise StopIteration
+        else:
+            raise StopIteration
 
     # Створення нової адресної книги
 book = AddressBook()
@@ -336,7 +294,7 @@ book = AddressBook()
     # Створення запису для John
 john_record = Record("John")
 john_record.add_phone("1234567890")
-john_record.add_phone("5550005555")
+john_record.add_phone("5555555555")
 
     # Додавання запису John до адресної книги
 book.add_record(john_record)
@@ -352,31 +310,25 @@ for name, record in book.data.items():
 
 john = book.find("John")
 print(john, ' <<< before')
-john.edit_phone("1234567890", "1110003333")
+john.edit_phone("1234567890", "1112223333")
 print(john, ' <<< after')
 
 print(john)  # Виведення: Contact name: John, phones: 1112223333; 5555555555
 
     # Пошук конкретного телефону у записі John
-found_phone = john.find_phone("5550005555")
+found_phone = john.find_phone("5555555555")
 print(f"{john.name}: {found_phone}")  # Виведення: 5555555555
 alik_rec = Record('Asdsd', '12-02-2020')
     # Видалення запису Jane
 book.delete("Jane")
 
+
 alex_record = Record('Alex', '20-02-1999')
-alex_record.add_phone('0935294209')
-alex_record.add_phone('1603000959')
 jeka_record = Record('Jeka', '10-03-1990')
-jeka_record.add_phone('2603220959')
 vova_record = Record('Vova', '13-12-2009')
-vova_record.add_phone('3603200959')
-lena_record = Record('Lenal', '11-09-1973')
-lena_record.add_phone('4603200959')
+lena_record = Record('Lena', '11-09-1973')
 natasha_record = Record('Natasha', '30-09-1963')
-natasha_record.add_phone('5603200959')
 sergey_record = Record('Sergey', '05-04-1962')
-sergey_record.add_phone('6603200959')
 
 alex_record.name.value = 'Alexxxx'
 print(alex_record.birthday)
@@ -390,14 +342,3 @@ book.add_record(sergey_record)
 
 for record in book.iterator():
     print(record)
-
-print('_______')
-
-book.save_address_book()
-loaded_book = book.read_address_book()
-
-for record in loaded_book.iterator():
-    print(record)
-
-print(book.search('000'))
-print(book.search('Al'))
